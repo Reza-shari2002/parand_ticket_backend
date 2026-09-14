@@ -1,7 +1,6 @@
 const express = require("express");
 const iplimiter = require("../../middlewares/Iplimiter");
 const iplimiterotp = require("./middlewares/ipLimiterotp");
-const token_verify = require("../../middlewares/Tokenverify");
 const checkbody_query = require("../../middlewares/checkbody&query");
 const validation = require("./auth.validation");
 const controller = require("./auth.controller");

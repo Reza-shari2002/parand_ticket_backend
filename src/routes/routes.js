@@ -3,6 +3,7 @@ const third_party_insurance_router = require('../modules/third-party-insurance/t
 const notification_router = require('../modules/notification/notification.routes');
 const login_router = require('../modules/login/login.routes');
 const authRouter = require('../modules/auth/auth.routes');
+const seatsRouter = require("../modules/seats/seats.routes")
 const router  = express.Router()
 
 
@@ -13,4 +14,6 @@ const router  = express.Router()
 //router.use("/notification", notification_router);
 
 router.use("/auth"  , authRouter)
+
+router.use("/seats" ,seatsRouter )
 module.exports = router;

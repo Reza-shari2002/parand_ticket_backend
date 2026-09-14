@@ -9,7 +9,7 @@ function make_access_token(user) {
       role:user.role,
     },
     process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: "15m" },
+    { expiresIn: "120m" },
   );
 }
 
