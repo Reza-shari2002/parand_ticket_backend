@@ -89,6 +89,11 @@ function checkbody_query(item, schema) {
     };
   } else if (item === "sendOtp") {
     return function (req, res, next) {
+      const body = req.body;
+
+      if (!body) {
+        return res.status(400).json({ message: " request must have body" });
+      }
       const { error, value } = schema.validate(req.body, { convert: true });
       if (error) {
         logger.error(`validation query : ${error.details[0].message}`);
@@ -101,6 +106,12 @@ function checkbody_query(item, schema) {
     };
   } else if (item === "verify-otp") {
     return function (req, res, next) {
+      const body = req.body;
+
+      if (!body) {
+        return res.status(400).json({ message: " request must have body" });
+      }
+
       const { error, value } = schema.validate(req.body, { convert: true });
       if (error) {
         logger.error(`validation query : ${error.details[0].message}`);
@@ -114,6 +125,12 @@ function checkbody_query(item, schema) {
     };
   } else if (item === "reserveTicket") {
     return function (req, res, next) {
+
+      const body = req.body;
+
+      if (!body) {
+        return res.status(400).json({ message: " request must have body" });
+      }
       const { error, value } = schema.validate(req.body, { convert: true });
       if (error) {
         logger.error(`validation query : ${error.details[0].message}`);

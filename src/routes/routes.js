@@ -4,6 +4,7 @@ const notification_router = require('../modules/notification/notification.routes
 const login_router = require('../modules/login/login.routes');
 const authRouter = require('../modules/auth/auth.routes');
 const seatsRouter = require("../modules/seats/seats.routes")
+const ticketRouter = require("../modules/tickets/tickets.routes")
 const router  = express.Router()
 
 
@@ -13,7 +14,11 @@ const router  = express.Router()
 
 //router.use("/notification", notification_router);
 
-router.use("/auth"  , authRouter)
+router.use("/auth"  , authRouter);
 
-router.use("/seats" ,seatsRouter )
+router.use("/seats" ,seatsRouter );
+
+router.use("/tickets" , ticketRouter );
+
+
 module.exports = router;

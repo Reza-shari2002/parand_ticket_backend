@@ -1,17 +1,22 @@
-const Services = require("./seats.service");
-const logger = require("../../config/logger");
-const getSeatsCapacity_service = require("./seats.service");
+const ticketsService = require("./tickets.service");
 
-async function capacity_controller(req, res, next) {
+async function reserveTicket_controller(req, res, next) {
   try {
-    const result = await getSeatsCapacity_service.getSeatsCapacity_service();
-    return res.status(200).json({
+    const userId = req.user.id; // از میدل‌ویر tokenVerify آمده
+    const { type, count } = req.ticketData; // از میدل‌ویر checkbody_query آمده
+
+    const result = await ticketsService.reserveTicket_service(userId, { type, count });
+
+    return res.status(201).json({
       status: "success",
-      data:result
+      message: "صندلی‌ها با موفقیت به مدت ۱۵ دقیقه برای شما رزرو موقت شدند",
+      data: result
     });
   } catch (err) {
     next(err);
   }
 }
 
-module.exports.capacity_controller = capacity_controller;
+module.exports = {
+  reserveTicket_controller
+};

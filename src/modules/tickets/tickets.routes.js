@@ -10,6 +10,6 @@ const controller = require("./tickets.controller");
 
 router.use(express.json());
 
-router.get("/capacity" , iplimiterInapp , tokenVerify  , controller.capacity_controller );
-router.post("/reserve" , iplimiterInapp,checkbody_query("reserveTicket" , validation.reserveTicket_schema) , tokenVerify , )
+router.post("/reserve" , iplimiterInapp,checkbody_query("reserveTicket" , validation.reserveTicket_schema) , tokenVerify , controller.reserveTicket_controller );
+
 module.exports = router;
