@@ -5,6 +5,7 @@ const login_router = require('../modules/login/login.routes');
 const authRouter = require('../modules/auth/auth.routes');
 const seatsRouter = require("../modules/seats/seats.routes")
 const ticketRouter = require("../modules/tickets/tickets.routes")
+const paymentRouter = require("../modules/payment/payment.routes");
 const router  = express.Router()
 
 
@@ -19,6 +20,8 @@ router.use("/auth"  , authRouter);
 router.use("/seats" ,seatsRouter );
 
 router.use("/tickets" , ticketRouter );
+
+router.use("/payment" ,  paymentRouter);
 
 
 module.exports = router;

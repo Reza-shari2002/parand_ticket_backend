@@ -159,6 +159,24 @@ function checkbody_query(item, schema) {
       return next();
     };
   }
+  else if(item === "paymentRequest"){
+    return function(req,res,next){
+            const body = req.body;
+
+      if (!body) {
+        return res.status(400).json({ message: " request must have params" });
+      }
+      const { error, value } = schema.validate(body, { convert: true });
+      if (error) {
+        logger.error(`validation query : ${error.details[0].message}`);
+        console.log(`validation body :  ${error.details[0].message}`);
+        return next(new AppError(error.details[0].message, 400));
+      }
+      req.ticketId = value.ticketId;
+       // شامل type و count
+      return next();
+    }
+  }
 }
 
 module.exports = checkbody_query;
