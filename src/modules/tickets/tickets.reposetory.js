@@ -163,6 +163,44 @@ async function expireOldPendingTickets(connection) {
 
   await connection.query(sql);
 }
+
+
+// دریافت اطلاعات اصلی بلیط
+async function getTicketById(ticketId) {
+  const sql = `
+    SELECT 
+      id,
+      user_id,
+      ticket_code,
+      type,
+      quantity,
+      total_amount,
+      status,
+      created_at
+    FROM tickets
+    WHERE id = ?
+    LIMIT 1
+  `;
+  const [rows] = await db.query(sql, [ticketId]);
+  return rows[0] || null;
+}
+
+// دریافت لیست شماره صندلی‌های متصل به این بلیط
+async function getSeatsByTicketId(ticketId) {
+  const sql = `
+    SELECT seat_number, status
+    FROM seats
+    WHERE ticket_id = ?
+    ORDER BY seat_number ASC
+  `;
+  const [rows] = await db.query(sql, [ticketId]);
+  return rows;
+}
+
+
+
+
+
 module.exports = {
   getAvailableSeatsForUpdate,
   createTicket,
@@ -172,5 +210,7 @@ module.exports = {
   findPendingTicketsForUpdate,
   releaseSeatsByTicketIds,
   expirePendingTickets,
-  expireOldPendingTickets
+  expireOldPendingTickets,
+  getTicketById,
+  getSeatsByTicketId
 };

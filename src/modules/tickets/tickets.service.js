@@ -175,7 +175,37 @@ async function reserveTicket_service(userId, { type, count }) {
 }
 
 
+async function getTicketById_service(ticketId, userId) {
+  // ۱. گرفتن اطلاعات بلیط
+  const ticket = await ticketsRepo.getTicketById(ticketId);
+
+  if (!ticket) {
+    throw new AppError("بلیط مورد نظر یافت نشد.", 404);
+  }
+
+  // ۲. بررسی مالکیت بلیط (امنیت)
+  if (ticket.user_id !== userId) {
+    throw new AppError("شما اجازه دسترسی به این بلیط را ندارید.", 403);
+  }
+
+  // ۳. گرفتن صندلی‌های مربوط به این بلیط
+  const seats = await ticketsRepo.getSeatsByTicketId(ticketId);
+
+  return {
+    id: ticket.id,
+    ticketCode: ticket.ticket_code,
+    type: ticket.type,
+    quantity: ticket.quantity,
+    totalAmount: ticket.total_amount,
+    status: ticket.status,
+    seats: seats.map(s => s.seat_number),
+    createdAt: ticket.created_at
+  };
+}
+
+
 
 module.exports = {
-  reserveTicket_service
+  reserveTicket_service,
+  getTicketById_service
 };

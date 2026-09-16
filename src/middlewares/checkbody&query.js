@@ -141,6 +141,24 @@ function checkbody_query(item, schema) {
       return next();
     };
   }
+  else if (item === "viewTicket") {
+    return function (req, res, next) {
+
+      const params = req.params;
+
+      if (!params) {
+        return res.status(400).json({ message: " request must have params" });
+      }
+      const { error, value } = schema.validate(params, { convert: true });
+      if (error) {
+        logger.error(`validation query : ${error.details[0].message}`);
+        console.log(`validation body :  ${error.details[0].message}`);
+        return next(new AppError(error.details[0].message, 400));
+      }
+      req.id = value.id; // شامل type و count
+      return next();
+    };
+  }
 }
 
 module.exports = checkbody_query;

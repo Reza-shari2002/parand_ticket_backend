@@ -17,6 +17,24 @@ async function reserveTicket_controller(req, res, next) {
   }
 }
 
+
+async function getTicketById_controller(req, res, next) {
+  try {
+    const userId = req.user.id;      // از میدل‌ویر tokenVerify
+    const ticketId = req.ticketId || req.params.id; // از میدل‌ویر ولیدیشن
+
+    const ticket = await ticketsService.getTicketById_service(ticketId, userId);
+
+    return res.status(200).json({
+      status: "success",
+      data: ticket
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
-  reserveTicket_controller
+  reserveTicket_controller, 
+  getTicketById_controller
 };
