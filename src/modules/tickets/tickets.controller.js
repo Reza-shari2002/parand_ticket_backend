@@ -34,7 +34,25 @@ async function getTicketById_controller(req, res, next) {
   }
 }
 
+
+async function getMyTickets_controller(req, res, next) {
+  try {
+    const userId = req.user.id; // شناسه استخراج شده از میدلور توکن
+
+    const tickets = await ticketsService.getMyTickets_service(userId);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        tickets,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
 module.exports = {
   reserveTicket_controller, 
-  getTicketById_controller
+  getTicketById_controller,
+  getMyTickets_controller
 };

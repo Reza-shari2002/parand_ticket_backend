@@ -175,16 +175,21 @@ async function expireOldPendingTickets(connection, expirationMinutes = EXPIRATIO
 async function getTicketById(ticketId) {
   const sql = `
     SELECT 
-      id,
-      user_id,
-      ticket_code,
-      type,
-      quantity,
-      total_amount,
-      status,
-      created_at
-    FROM tickets
-    WHERE id = ?
+      t.id,
+      t.user_id,
+      t.ticket_code,
+      t.type,
+      t.quantity,
+      t.total_amount,
+      t.status,
+      t.created_at,
+      -- اطلاعات کاربر
+      u.phone,
+      u.full_name,
+      u.national_code
+    FROM tickets t
+    INNER JOIN users u ON t.user_id = u.id
+    WHERE t.id = ?
     LIMIT 1
   `;
   const [rows] = await db.query(sql, [ticketId]);
@@ -203,6 +208,47 @@ async function getSeatsByTicketId(ticketId) {
   return rows;
 }
 
+async function getUserPaidTickets(connection, userId) {
+  const [rows] = await connection.query(
+    `
+      SELECT 
+        t.id AS ticket_id,
+        t.ticket_code,
+        t.type,
+        t.quantity,
+        t.total_amount,
+        t.status,
+        t.created_at,
+        u.id AS user_id,
+        u.phone,
+        u.full_name,
+        u.national_code,
+        COALESCE(
+          JSON_ARRAYAGG(
+            IF(s.id IS NOT NULL, 
+              JSON_OBJECT(
+                'seat_id', s.id,
+                'seat_number', s.seat_number,
+                'type', s.type
+              ), 
+              NULL
+            )
+          ),
+          JSON_ARRAY()
+        ) AS seats
+      FROM tickets t
+      INNER JOIN users u ON t.user_id = u.id
+      LEFT JOIN seats s ON s.ticket_id = t.id
+      WHERE t.user_id = ? AND t.status = 'paid'
+      GROUP BY t.id, u.id
+      ORDER BY t.created_at DESC
+    `,
+    [userId]
+  );
+
+  return rows;
+}
+
 
 
 
@@ -218,5 +264,6 @@ module.exports = {
   expirePendingTickets,
   expireOldPendingTickets,
   getTicketById,
-  getSeatsByTicketId
+  getSeatsByTicketId , 
+  getUserPaidTickets
 };

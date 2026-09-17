@@ -1,9 +1,9 @@
 const rateLimit = require("express-rate-limit");
 const logger = require("../../../config/logger");
 
-const ipLimiterotp = rateLimit({
+const ipLimiterInapp = rateLimit({
   windowMs: 3 * 60 * 1000, // 10 دقیقه
-  max: 3, // حداکثر 10 درخواست
+  max: 20, // حداکثر 10 درخواست
   message: "Too many requests from this IP",
   standardHeaders: true, // ارسال هدر استاندارد
   legacyHeaders: false, // غیر فعال کردن هدر قدیمی
@@ -16,4 +16,4 @@ const ipLimiterotp = rateLimit({
   },
 });
 
-module.exports = ipLimiterotp;
+module.exports = ipLimiterInapp;

@@ -169,10 +169,30 @@ async function getTicketById_service(ticketId, userId) {
     status: ticket.status,
     seats: seats.map((s) => s.seat_number),
     createdAt: ticket.created_at,
+        user: {
+      id: ticket.user_id,
+      phone: ticket.phone,
+      fullName: ticket.full_name,
+      nationalCode: ticket.national_code,
+    },
   };
 }
 
+async function getMyTickets_service(userId) {
+  const connection = await db.getConnection();
+  try {
+    const tickets = await ticketsRepo.getUserPaidTickets(connection, userId);
+
+    return tickets.map((ticket) => ({
+      ...ticket,
+      seats: typeof ticket.seats === "string" ? JSON.parse(ticket.seats) : (ticket.seats || []),
+    }));
+  } finally {
+    connection.release();
+  }
+}
 module.exports = {
   reserveTicket_service,
   getTicketById_service,
+  getMyTickets_service
 };

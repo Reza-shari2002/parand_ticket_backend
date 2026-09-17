@@ -24,7 +24,34 @@ async function createUser(phone) {
   }
 }
 
+
+async function updateUserProfile(connection, userId, fullName, nationalCode) {
+  const [result] = await connection.query(
+    `
+    UPDATE users
+    SET full_name = ?, national_code = ?
+    WHERE id = ?
+    `,
+    [fullName, nationalCode ?? null, userId]
+  );
+
+  return result;
+}
+
+async function findUserById(connection, userId) {
+  const [rows] = await connection.query(
+    `SELECT  phone, role, full_name, national_code, created_at FROM users WHERE id = ? LIMIT 1`,
+    [userId]
+  );
+  return rows[0] || null;
+}
+
+
+
+
 module.exports.findUserByPhone = findUserByPhone;
 module.exports.createUser = createUser;
+module.exports.findUserById = findUserById;
+module.exports.updateUserProfile = updateUserProfile;
 
 
