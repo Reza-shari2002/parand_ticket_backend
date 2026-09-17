@@ -2,12 +2,13 @@ const crypto = require("crypto");
 const db = require("../../config/db");
 const ticketsRepo = require("./tickets.reposetory");
 const AppError = require("../../config/AppErrore");
+const EXPIRATION_MINUTES = Number(process.env.TICKET_EXPIRATION_MINUTES) || 15;
 
 // قیمت‌گذاری پایه بر اساس نوع (تومان) - این مقادیر رو بر اساس سیاست خودت تنظیم کن
 const TICKET_PRICES = {
   gamer: 150000,
   vip: 100000,
-  regular: 50000
+  regular: 50000,
 };
 
 // تابع کمکی پیدا کردن صندلی‌های متوالی
@@ -41,10 +42,7 @@ async function reserveTicket_service(userId, { type, count }) {
   try {
     await connection.beginTransaction();
 
-    const user = await ticketsRepo.lockUserById(
-      connection,
-      userId
-    );
+    const user = await ticketsRepo.lockUserById(connection, userId);
 
     if (!user) {
       throw new AppError("کاربر یافت نشد", 404);
@@ -52,104 +50,79 @@ async function reserveTicket_service(userId, { type, count }) {
 
     await ticketsRepo.expireOldPendingTickets(connection);
 
-    const paidTicket =
-      await ticketsRepo.findPaidTicketByUserAndType(
-        connection,
-        userId,
-        type
-      );
+    const paidTicket = await ticketsRepo.findPaidTicketByUserAndType(
+      connection,
+      userId,
+      type,
+    );
 
     if (paidTicket) {
       const typeTitle = {
         gamer: "گیمر",
         vip: "تماشاچی VIP",
-        regular: "تماشاچی عادی"
+        regular: "تماشاچی عادی",
       }[type];
 
       throw new AppError(
         `کاربر گرامی، شما قبلاً بلیط ${typeTitle} را تهیه کرده‌اید.`,
-        409
+        409,
       );
     }
 
-    const pendingTickets =
-      await ticketsRepo.findPendingTicketsForUpdate(
-        connection,
-        userId,
-        type
-      );
-
-    const pendingTicketIds = pendingTickets.map(
-      ticket => ticket.id
+    const pendingTickets = await ticketsRepo.findPendingTicketsForUpdate(
+      connection,
+      userId,
+      type,
     );
 
-    if (pendingTicketIds.length > 0) {
-      await ticketsRepo.releaseSeatsByTicketIds(
-        connection,
-        pendingTicketIds
-      );
+    const pendingTicketIds = pendingTickets.map((ticket) => ticket.id);
 
-      await ticketsRepo.expirePendingTickets(
-        connection,
-        pendingTicketIds
-      );
+    if (pendingTicketIds.length > 0) {
+      await ticketsRepo.releaseSeatsByTicketIds(connection, pendingTicketIds);
+
+      await ticketsRepo.expirePendingTickets(connection, pendingTicketIds);
     }
 
-    const availableSeats =
-      await ticketsRepo.getAvailableSeatsForUpdate(
-        connection,
-        type
-      );
+    const availableSeats = await ticketsRepo.getAvailableSeatsForUpdate(
+      connection,
+      type,
+    );
 
     let selectedSeats;
     const actualQuantity = type === "gamer" ? 1 : count;
 
     if (type === "gamer") {
       if (availableSeats.length === 0) {
-        throw new AppError(
-          "هیچ جایگاه گیمر آزادی وجود ندارد",
-          409
-        );
+        throw new AppError("هیچ جایگاه گیمر آزادی وجود ندارد", 409);
       }
 
       selectedSeats = [availableSeats[0]];
     } else {
-      selectedSeats = findConsecutiveSeats(
-        availableSeats,
-        actualQuantity
-      );
+      selectedSeats = findConsecutiveSeats(availableSeats, actualQuantity);
 
       if (!selectedSeats) {
         throw new AppError(
           `${actualQuantity} صندلی متوالی برای این بخش موجود نیست.`,
-          409
+          409,
         );
       }
     }
 
-    const ticketCode = `TC-${crypto.randomInt(
-      100000,
-      1000000
-    )}`;
+    const ticketCode = `TC-${crypto.randomInt(100000, 1000000)}`;
 
-    const totalAmount =
-      TICKET_PRICES[type] * actualQuantity;
+    const totalAmount = TICKET_PRICES[type] * actualQuantity;
 
     const ticketId = await ticketsRepo.createTicket(connection, {
       userId,
       ticketCode,
       type,
       quantity: actualQuantity,
-      totalAmount
+      totalAmount,
     });
 
-    const seatIds = selectedSeats.map(seat => seat.id);
+    const seatIds = selectedSeats.map((seat) => seat.id);
 
-    await ticketsRepo.lockSeats(
-      connection,
-      seatIds,
-      ticketId
-    );
+    await ticketsRepo.lockSeats(connection, seatIds, ticketId);
 
     await connection.commit();
 
@@ -159,12 +132,9 @@ async function reserveTicket_service(userId, { type, count }) {
       type,
       quantity: actualQuantity,
       totalAmount,
-      seats: selectedSeats.map(
-        seat => seat.seat_number
-      ),
-      previousReservationReplaced:
-        pendingTicketIds.length > 0,
-      expiresInMinutes: 15
+      seats: selectedSeats.map((seat) => seat.seat_number),
+      previousReservationReplaced: pendingTicketIds.length > 0,
+      expiresInMinutes: EXPIRATION_MINUTES, // اینجا هم متغیر قرار می‌گیرد
     };
   } catch (error) {
     await connection.rollback();
@@ -173,7 +143,6 @@ async function reserveTicket_service(userId, { type, count }) {
     connection.release();
   }
 }
-
 
 async function getTicketById_service(ticketId, userId) {
   // ۱. گرفتن اطلاعات بلیط
@@ -198,14 +167,12 @@ async function getTicketById_service(ticketId, userId) {
     quantity: ticket.quantity,
     totalAmount: ticket.total_amount,
     status: ticket.status,
-    seats: seats.map(s => s.seat_number),
-    createdAt: ticket.created_at
+    seats: seats.map((s) => s.seat_number),
+    createdAt: ticket.created_at,
   };
 }
 
-
-
 module.exports = {
   reserveTicket_service,
-  getTicketById_service
+  getTicketById_service,
 };

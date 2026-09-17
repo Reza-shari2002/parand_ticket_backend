@@ -1,22 +1,25 @@
 const db = require("../../config/db");
+const EXPIRATION_MINUTES = Number(process.env.TICKET_EXPIRATION_MINUTES) || 15;
 
 // ۱. گرفتن صندلی‌ها با اعمال قفل انحصاری (FOR UPDATE)
 // صندلی‌هایی که یا Available هستند یا زمان قفل ۱۵ دقیقه‌ایشون منقضی شده
-async function getAvailableSeatsForUpdate(connection, type) {
+async function getAvailableSeatsForUpdate(connection, type, expirationMinutes = EXPIRATION_MINUTES) {
   const sql = `
     SELECT id, seat_number, status, locked_at 
     FROM seats 
     WHERE type = ? 
       AND (
         status = 'available' 
-        OR (status = 'locked' AND locked_at < NOW() - INTERVAL 15 MINUTE)
+        OR (status = 'locked' AND locked_at < NOW() - INTERVAL ? MINUTE)
       )
     ORDER BY seat_number ASC
     FOR UPDATE
   `;
-  const [rows] = await connection.query(sql, [type]);
+  // مقدار expirationMinutes به عنوان پارامتر دوم ارسال می‌شود
+  const [rows] = await connection.query(sql, [type, expirationMinutes]);
   return rows;
 }
+
 
 // ۲. ساخت رکورد بلیط جدید
 // tickets.repository.js اصلاح شده
@@ -151,18 +154,21 @@ async function expirePendingTickets(connection, ticketIds) {
 
 
 
-async function expireOldPendingTickets(connection) {
+async function expireOldPendingTickets(connection, expirationMinutes = EXPIRATION_MINUTES) {
   const sql = `
-    UPDATE tickets t
-    INNER JOIN seats s ON s.ticket_id = t.id
-    SET t.status = 'expired'
+    UPDATE seats s
+    INNER JOIN tickets t ON s.ticket_id = t.id
+    SET s.status = 'available',
+        s.locked_at = NULL,
+        s.ticket_id = NULL,
+        t.status = 'expired'
     WHERE t.status = 'pending'
       AND s.status = 'locked'
-      AND s.locked_at < NOW() - INTERVAL 15 MINUTE
+      AND s.locked_at < NOW() - INTERVAL ? MINUTE
   `;
-
-  await connection.query(sql);
+  await connection.query(sql, [expirationMinutes]);
 }
+
 
 
 // دریافت اطلاعات اصلی بلیط

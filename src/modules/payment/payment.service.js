@@ -2,6 +2,7 @@ const db = require("../../config/db");
 const paymentRepo = require("./payment.reposetory");
 const ticketsRepo = require("../../modules/tickets/tickets.reposetory");
 const { requestPayment, verifyPayment } = require("./utils/zarinpal");
+const EXPIRATION_MINUTES = Number(process.env.TICKET_EXPIRATION_MINUTES) || 15;
 const AppError = require("../../config/AppErrore");
 
 // ۱. درخواست درگاه پرداخت
@@ -25,10 +26,11 @@ async function requestPayment_service(ticketId, userId, userPhone) {
   }
 
   // بررسی شرط انقضای ۱۵ دقیقه رزرو صندلی
-  const diffMinutes = (Date.now() - new Date(ticket.created_at).getTime()) / (1000 * 60);
-  if (diffMinutes > 15) {
-    throw new AppError("مهلت ۱۵ دقیقه‌ای پرداخت این رزرو به پایان رسیده است. لطفاً دوباره رزرو کنید.", 400);
-  }
+// در تابع requestPayment_service:
+const diffMinutes = (Date.now() - new Date(ticket.created_at).getTime()) / (1000 * 60);
+if (diffMinutes > EXPIRATION_MINUTES) {
+  throw new AppError(`مهلت ${EXPIRATION_MINUTES} دقیقه‌ای پرداخت این رزرو به پایان رسیده است. لطفاً دوباره رزرو کنید.`, 400);
+}
 
   // درخواست اتصال به زرین‌پال
   const { authority, paymentUrl } = await requestPayment({
