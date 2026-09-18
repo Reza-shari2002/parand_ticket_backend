@@ -35,6 +35,141 @@ async function verifyTicket_service(searchQuery) {
   return tickets;
 }
 
+
+async function useTicket_service(ticketId) {
+  // ۱. بررسی وجود بلیت
+  const ticket = await adminRepo.getTicketById(ticketId);
+  if (!ticket) {
+    throw new AppError("بلیتی با این شناسه یافت نشد.", 404);
+  }
+
+  // ۲. بررسی پرداخت‌شده بودن بلیت
+  if (ticket.status !== "paid") {
+    throw new AppError("این بلیت پرداخت نشده یا معتبر نیست.", 400);
+  }
+
+  // ۳. بررسی استفاده قبلی
+  if (ticket.is_used === 1) {
+    throw new AppError("این بلیت قبلاً استفاده شده است و امکان ورود مجدد وجود ندارد.", 400);
+  }
+
+  // ۴. آپدیت کردن وضعیت
+  await adminRepo.markTicketAsUsed(ticketId);
+
+  return {
+    ticket_id: ticket.id,
+    ticket_code: ticket.ticket_code,
+    is_used: true
+  };
+}
+
+async function getAdminTicketsReport_service({ page, limit, type }) {
+  const offset = (page - 1) * limit;
+  const { total, tickets: rawTickets } = await adminRepo.getAllPaidTickets({ limit, offset, type });
+
+  const tickets = rawTickets.map((t) => {
+    let seats = typeof t.seats === "string" ? JSON.parse(t.seats) : t.seats;
+    seats = Array.isArray(seats) ? seats.filter(Boolean) : [];
+
+    return {
+      ticket_id: t.ticket_id,
+      ticket_code: t.ticket_code,
+      ticket_type: t.ticket_type,
+      quantity: t.quantity,
+      total_amount: t.total_amount,
+      status: t.status,
+      is_used: Boolean(t.is_used),
+      created_at: t.created_at,
+      user: {
+        user_id: t.user_id,
+        phone: t.phone,
+        full_name: t.full_name,
+        national_code: t.national_code
+      },
+      seats
+    };
+  });
+
+  return {
+    pagination: {
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      totalPages: Math.ceil(total / limit)
+    },
+    tickets
+  };
+}
+
+
+async function getTransactionsReport_service({ page, limit }) {
+  const offset = (page - 1) * limit;
+  const { total, transactions } = await adminRepo.getAllTransactions({ limit, offset });
+
+  return {
+    pagination: {
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      totalPages: Math.ceil(total / limit)
+    },
+    transactions
+  };
+}
+
+async function getUsersReport_service({ page, limit, search }) {
+  const offset = (page - 1) * limit;
+  const { total, users } = await adminRepo.getAllUsers({ limit, offset, search });
+
+  return {
+    pagination: {
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      totalPages: Math.ceil(total / limit)
+    },
+    users
+  };
+}
+
+
+async function getOtpLogsReport_service({ page, limit, phone, is_used }) {
+  const offset = (page - 1) * limit;
+  const { total, otps: rawOtps } = await adminRepo.getAllOtpLogs({ 
+    limit, 
+    offset, 
+    phone, 
+    is_used 
+  });
+
+  const otps = rawOtps.map((otp) => ({
+    id: otp.id,
+    phone: otp.phone,
+    code: otp.code,
+    is_used: Boolean(otp.is_used),
+    is_expired: Boolean(otp.is_expired),
+    expires_at: otp.expires_at,
+    created_at: otp.created_at
+  }));
+
+  return {
+    pagination: {
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      totalPages: Math.ceil(total / limit)
+    },
+    otps
+  };
+}
+
+
+
 module.exports = {
-  verifyTicket_service
+  verifyTicket_service , 
+  useTicket_service  , 
+  getAdminTicketsReport_service ,
+  getTransactionsReport_service , 
+  getUsersReport_service , 
+  getOtpLogsReport_service 
 };

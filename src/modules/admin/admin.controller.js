@@ -19,6 +19,107 @@ async function verifyTicket_controller(req, res, next) {
   }
 }
 
+async function useTicket_controller(req, res, next) {
+  try {
+    const  id  = req.id;
+
+    const result = await adminService.useTicket_service(id);
+
+    return res.status(200).json({
+      success: true,
+      message: "ورود با موفقیت ثبت شد و بلیت باطل/استفاده گردید.",
+      data: result
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function getAdminTickets_controller(req, res, next) {
+  try {
+    const page = parseInt(req.filter.page) || 1;
+    const limit = parseInt(req.filter.limit) || 20;
+    const type = req.filter.type;
+
+    const result = await adminService.getAdminTicketsReport_service({ page, limit, type });
+
+    return res.status(200).json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function getTransactions_controller(req, res, next) {
+  try {
+    const page = parseInt(req.filter.page) || 1;
+    const limit = parseInt(req.filter.limit) || 20;
+
+    const result = await adminService.getTransactionsReport_service({ page, limit });
+
+    return res.status(200).json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function getUsers_controller(req, res, next) {
+  try {
+    const { page, limit, search } = req.filter; 
+
+    const result = await adminService.getUsersReport_service({ 
+        page: page || 1, 
+        limit: limit || 20, 
+        search 
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function getOtpLogs_controller(req, res, next) {
+  try {
+    const page = parseInt(req.filter.page) || 1;
+    const limit = parseInt(req.filter.limit) || 20;
+    const phone = req.filter.phone;
+    
+    // تبدیل امن استرینگ کوئری به boolean اگر ارسال شده باشد
+    let is_used;
+    if (req.filter.is_used !== undefined && req.filter.is_used !== "") {
+      is_used = req.filter.is_used === "true" || req.filter.is_used === true;
+    }
+
+    const result = await adminService.getOtpLogsReport_service({
+      page,
+      limit,
+      phone,
+      is_used
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
-  verifyTicket_controller
+  verifyTicket_controller , 
+  useTicket_controller , 
+  getAdminTickets_controller , 
+  getTransactions_controller , 
+  getUsers_controller ,
+  getOtpLogs_controller
 };
