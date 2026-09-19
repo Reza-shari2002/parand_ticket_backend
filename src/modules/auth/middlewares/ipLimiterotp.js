@@ -3,7 +3,7 @@ const logger = require("../../../config/logger");
 
 const ipLimiterotp = rateLimit({
   windowMs: 3 * 60 * 1000, // 10 دقیقه
-  max: 3, // حداکثر 10 درخواست
+  max: 2, // حداکثر 10 درخواست
   message: "Too many requests from this IP",
   standardHeaders: true, // ارسال هدر استاندارد
   legacyHeaders: false, // غیر فعال کردن هدر قدیمی
