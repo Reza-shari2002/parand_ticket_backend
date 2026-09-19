@@ -251,7 +251,22 @@ async function getUserPaidTickets(connection, userId) {
 
 
 
+async function releaseAllSeatsByTicketId(connection, ticketId) {
+  const sql = `
+    UPDATE seats
+    SET status = 'available',
+        locked_at = NULL,
+        ticket_id = NULL
+    WHERE ticket_id = ?
+  `;
+  await connection.query(sql, [ticketId]);
+}
 
+// ۲. تغییر وضعیت بلیط به هر وضعیت دلخواه (از جمله expired)
+async function updateTicketStatus(connection, ticketId, status) {
+  const sql = `UPDATE tickets SET status = ? WHERE id = ?`;
+  await connection.query(sql, [status, ticketId]);
+}
 
 module.exports = {
   getAvailableSeatsForUpdate,
@@ -265,5 +280,7 @@ module.exports = {
   expireOldPendingTickets,
   getTicketById,
   getSeatsByTicketId , 
-  getUserPaidTickets
+  getUserPaidTickets , 
+  updateTicketStatus , 
+  releaseAllSeatsByTicketId ,
 };

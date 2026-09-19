@@ -125,7 +125,6 @@ function checkbody_query(item, schema) {
     };
   } else if (item === "reserveTicket") {
     return function (req, res, next) {
-
       const body = req.body;
 
       if (!body) {
@@ -140,10 +139,8 @@ function checkbody_query(item, schema) {
       req.ticketData = value; // شامل type و count
       return next();
     };
-  }
-  else if (item === "viewTicket") {
+  } else if (item === "viewTicket") {
     return function (req, res, next) {
-
       const params = req.params;
 
       if (!params) {
@@ -158,10 +155,9 @@ function checkbody_query(item, schema) {
       req.id = value.id; // شامل type و count
       return next();
     };
-  }
-  else if(item === "paymentRequest"){
-    return function(req,res,next){
-            const body = req.body;
+  } else if (item === "paymentRequest") {
+    return function (req, res, next) {
+      const body = req.body;
 
       if (!body) {
         return res.status(400).json({ message: " request must have params" });
@@ -173,13 +169,12 @@ function checkbody_query(item, schema) {
         return next(new AppError(error.details[0].message, 400));
       }
       req.ticketId = value.ticketId;
-       // شامل type و count
+      // شامل type و count
       return next();
-    }
-  }
-  else if(item === "update_user"){
-    return function(req,res,next){
-            const body = req.body;
+    };
+  } else if (item === "update_user") {
+    return function (req, res, next) {
+      const body = req.body;
 
       if (!body) {
         return res.status(400).json({ message: " request must have params" });
@@ -191,14 +186,12 @@ function checkbody_query(item, schema) {
         return next(new AppError(error.details[0].message, 400));
       }
       req.body = value;
-       // شامل type و count
+      // شامل type و count
       return next();
-    }
-  }
-
-    else if(item === "Verify-ticket"){
-    return function(req,res,next){
-            const query = req.query;
+    };
+  } else if (item === "Verify-ticket") {
+    return function (req, res, next) {
+      const query = req.query;
 
       if (!query) {
         return res.status(400).json({ message: " request must have params" });
@@ -210,13 +203,11 @@ function checkbody_query(item, schema) {
         return next(new AppError(error.details[0].message, 400));
       }
       req.query = value;
-       // شامل type و count
+      // شامل type و count
       return next();
-    }
-  }
-  else if (item === "useTicket") {
+    };
+  } else if (item === "useTicket") {
     return function (req, res, next) {
-
       const params = req.params;
 
       if (!params) {
@@ -231,10 +222,8 @@ function checkbody_query(item, schema) {
       req.id = value.id; // شامل type و count
       return next();
     };
-  }
-  else if (item === "allTickets") {
+  } else if (item === "allTickets") {
     return function (req, res, next) {
-
       const params = req.params;
 
       if (!params) {
@@ -249,10 +238,8 @@ function checkbody_query(item, schema) {
       req.filter = value; // شامل type و count
       return next();
     };
-  }
-    else if (item === "allTransaction") {
+  } else if (item === "allTransaction") {
     return function (req, res, next) {
-
       const params = req.params;
 
       if (!params) {
@@ -267,10 +254,8 @@ function checkbody_query(item, schema) {
       req.filter = value; // شامل type و count
       return next();
     };
-  }
-  else if (item === "allUsers") {
+  } else if (item === "allUsers") {
     return function (req, res, next) {
-
       const params = req.params;
 
       if (!params) {
@@ -285,10 +270,8 @@ function checkbody_query(item, schema) {
       req.filter = value; // شامل type و count
       return next();
     };
-  }
-    else if (item === "allOtp") {
+  } else if (item === "allOtp") {
     return function (req, res, next) {
-
       const params = req.params;
 
       if (!params) {
@@ -301,6 +284,54 @@ function checkbody_query(item, schema) {
         return next(new AppError(error.details[0].message, 400));
       }
       req.filter = value; // شامل type و count
+      return next();
+    };
+  } else if (item === "allSeats") {
+    return function (req, res, next) {
+      const params = req.params;
+
+      if (!params) {
+        return res.status(400).json({ message: " request must have params" });
+      }
+      const { error, value } = schema.validate(params, { convert: true });
+      if (error) {
+        logger.error(`validation query : ${error.details[0].message}`);
+        console.log(`validation body :  ${error.details[0].message}`);
+        return next(new AppError(error.details[0].message, 400));
+      }
+      req.filter = value; // شامل type و count
+      return next();
+    };
+  } else if (item === "generateSeats") {
+    return function (req, res, next) {
+      const body = req.body;
+
+      if (!body) {
+        return res.status(400).json({ message: " request must have body" });
+      }
+      const { error, value } = schema.validate(body, { convert: true });
+      if (error) {
+        logger.error(`validation query : ${error.details[0].message}`);
+        console.log(`validation body :  ${error.details[0].message}`);
+        return next(new AppError(error.details[0].message, 400));
+      }
+      req.body = value; // شامل type و count
+      return next();
+    };
+  } else if (item === "cancelTicket") {
+    return function (req, res, next) {
+      const params = req.params;
+
+      if (!params) {
+        return res.status(400).json({ message: " request must have body" });
+      }
+      const { error, value } = schema.validate(params, { convert: true });
+      if (error) {
+        logger.error(`validation query : ${error.details[0].message}`);
+        console.log(`validation body :  ${error.details[0].message}`);
+        return next(new AppError(error.details[0].message, 400));
+      }
+      req.params = value; // شامل type و count
       return next();
     };
   }

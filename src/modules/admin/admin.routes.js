@@ -18,6 +18,14 @@ router.get(
 );
 
 router.patch(
+  "/tickets/:id/cancel",
+  tokenVerify,
+  requireAdmin,
+  checkbody_query("cancelTicket",validation.getTicketById_schema) ,
+  controller.cancelTicket_controller
+);
+
+router.patch(
   "/ticket/:id/use",
   tokenVerify,
   requireAdmin,
@@ -49,7 +57,28 @@ router.get(
   controller.getUsers_controller,
 );
 
+router.get(
+  "/otp-logs",
+  tokenVerify,
+  requireAdmin,
+  checkbody_query("allOtp", validation.getOtpLogs_schema),
+  controller.getOtpLogs_controller,
+);
 
-router.get('/otp-logs' , tokenVerify , requireAdmin , checkbody_query("allOtp" , validation.getOtpLogs_schema) , controller.getOtpLogs_controller);
+router.post(
+  "/seats/generate",
+  tokenVerify,
+  requireAdmin,
+  checkbody_query("generateSeats", validation.generateSeats_schema),
+  controller.generateSeats_controller,
+);
+
+router.get(
+  "/seats",
+  tokenVerify,
+  requireAdmin,
+  checkbody_query("allSeats", validation.getSeats_schema),
+  controller.getSeats_controller,
+);
 
 module.exports = router;

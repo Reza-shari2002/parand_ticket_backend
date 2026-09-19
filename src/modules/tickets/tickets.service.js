@@ -191,8 +191,39 @@ async function getMyTickets_service(userId) {
     connection.release();
   }
 }
+
+
+async function cancelTicket_service(ticketId) {
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    // ۱. بررسی وجود بلیط
+    const ticket = await ticketsRepo.getTicketById(ticketId);
+    if (!ticket) {
+      throw new AppError("بلیط یافت نشد.", 404);
+    }
+
+    // ۲. آزادسازی صندلی‌ها (چه فروخته شده چه قفل شده)
+    await ticketsRepo.releaseAllSeatsByTicketId(connection, ticketId);
+
+    // ۳. تغییر وضعیت بلیط به expired
+    await ticketsRepo.updateTicketStatus(connection, ticketId, 'expired');
+
+    await connection.commit();
+    return { success: true, message: "بلیط با موفقیت ابطال و صندلی‌ها آزاد شدند." };
+
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
 module.exports = {
   reserveTicket_service,
   getTicketById_service,
-  getMyTickets_service
+  getMyTickets_service,
+  cancelTicket_service
 };

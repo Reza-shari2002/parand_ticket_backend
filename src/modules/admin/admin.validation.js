@@ -55,6 +55,34 @@ const getOtpLogs_schema = Joi.object({
   }),
 });
 
+const getSeats_schema = Joi.object({
+  page: Joi.number().integer().min(1).default(1),
+  limit: Joi.number().integer().min(1).max(100).default(20),
+  type: Joi.string().valid("gamer", "vip", "regular").optional(),
+  status: Joi.string().valid("available", "locked", "sold").optional()
+});
+
+
+const generateSeats_schema = Joi.object({
+  gamer: Joi.number().integer().min(0).default(0).messages({
+    "number.base": "تعداد صندلی گیمر باید عدد باشد.",
+    "number.min": "تعداد صندلی گیمر نمی‌تواند منفی باشد."
+  }),
+  vip: Joi.number().integer().min(0).default(0).messages({
+    "number.base": "تعداد صندلی VIP باید عدد باشد.",
+    "number.min": "تعداد صندلی VIP نمی‌تواند منفی باشد."
+  }),
+  regular: Joi.number().integer().min(0).default(0).messages({
+    "number.base": "تعداد صندلی معمولی باید عدد باشد.",
+    "number.min": "تعداد صندلی معمولی نمی‌تواند منفی باشد."
+  })
+}).custom((value, helpers) => {
+  // حداقل یکی از دسته‌ها باید بزرگ‌تر از صفر باشد
+  if (value.gamer === 0 && value.vip === 0 && value.regular === 0) {
+    return helpers.message("حداقل باید تعداد یکی از انواع صندلی‌ها بیشتر از صفر باشد.");
+  }
+  return value;
+});
 
 
 module.exports.verifyTicket_schema = verifyTicket_schema;
@@ -63,3 +91,6 @@ module.exports.getAdminTickets_schema = getAdminTickets_schema;
 module.exports.getTransactions_schema = getTransactions_schema;
 module.exports.getUsers_schema = getUsers_schema;
 module.exports.getOtpLogs_schema = getOtpLogs_schema;
+module.exports.getSeats_schema  = getSeats_schema ; 
+module.exports.generateSeats_schema = generateSeats_schema;
+

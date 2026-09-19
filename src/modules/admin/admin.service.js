@@ -164,6 +164,68 @@ async function getOtpLogsReport_service({ page, limit, phone, is_used }) {
 }
 
 
+async function getSeatsReport_service({ page, limit, type, status }) {
+  const offset = (page - 1) * limit;
+  const { total, seats } = await adminRepo.getAllSeats({ limit, offset, type, status });
+
+  return {
+    pagination: {
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      totalPages: Math.ceil(total / limit)
+    },
+    seats: seats.map(s => ({
+      ...s,
+      is_locked: s.status === 'locked'
+    }))
+  };
+}
+
+
+async function generateSeats_service({ gamer = 0, vip = 0, regular = 0 }) {
+  // ۱. گرفتن آخرین شماره صندلی‌های موجود در دیتابیس
+  const maxNumbers = await adminRepo.getMaxSeatNumbers();
+
+  const seatsToInsert = [];
+  const generatedSummary = {
+    gamer: { count: gamer, from: 0, to: 0 },
+    vip: { count: vip, from: 0, to: 0 },
+    regular: { count: regular, from: 0, to: 0 }
+  };
+
+  // فانکشن کمکی برای تولید ردیف‌های هر نوع صندلی
+  const buildSeats = (type, count) => {
+    if (count <= 0) return;
+    const startFrom = maxNumbers[type] + 1;
+    const endAt = maxNumbers[type] + count;
+
+    for (let i = startFrom; i <= endAt; i++) {
+      // فرمت: [seat_number, type, status]
+      seatsToInsert.push([i, type, "available"]);
+    }
+
+    generatedSummary[type] = {
+      count,
+      from: startFrom,
+      to: endAt
+    };
+  };
+
+  buildSeats("gamer", gamer);
+  buildSeats("vip", vip);
+  buildSeats("regular", regular);
+
+  // ۲. درج کل صندلی‌ها در دیتابیس
+  const insertedCount = await adminRepo.bulkInsertSeats(seatsToInsert);
+
+  return {
+    total_created: insertedCount,
+    details: generatedSummary
+  };
+}
+
+
 
 module.exports = {
   verifyTicket_service , 
@@ -171,5 +233,7 @@ module.exports = {
   getAdminTicketsReport_service ,
   getTransactionsReport_service , 
   getUsersReport_service , 
-  getOtpLogsReport_service 
+  getOtpLogsReport_service , 
+  getSeatsReport_service ,
+  generateSeats_service ,  
 };

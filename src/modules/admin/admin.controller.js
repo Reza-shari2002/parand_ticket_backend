@@ -1,5 +1,5 @@
 const adminService = require("./admin.service");
-
+const ticketService = require("../../modules/tickets/tickets.service");
 async function verifyTicket_controller(req, res, next) {
   try {
     const { query } = req.query;
@@ -115,11 +115,70 @@ async function getOtpLogs_controller(req, res, next) {
   }
 }
 
+
+
+async function getSeats_controller(req, res, next) {
+  try {
+    const { page, limit, type, status } = req.filter;
+    
+    const result = await adminService.getSeatsReport_service({
+      page: page || 1,
+      limit: limit || 20,
+      type,
+      status
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+
+
+
+async function generateSeats_controller(req, res, next) {
+  try {
+    const { gamer, vip, regular } = req.body;
+
+    const result = await adminService.generateSeats_service({
+      gamer: Number(gamer) || 0,
+      vip: Number(vip) || 0,
+      regular: Number(regular) || 0
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: `${result.total_created} صندلی با موفقیت ایجاد شد.`,
+      data: result
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+
+async function cancelTicket_controller(req, res, next) {
+  try {
+    const { id } = req.params; // آیدی بلیط
+    const result = await ticketService.cancelTicket_service(id);
+    return res.status(200).json({ success: true, message: result.message });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   verifyTicket_controller , 
   useTicket_controller , 
   getAdminTickets_controller , 
   getTransactions_controller , 
   getUsers_controller ,
-  getOtpLogs_controller
+  getOtpLogs_controller , 
+  getSeats_controller ,
+  generateSeats_controller ,  
+  cancelTicket_controller , 
 };

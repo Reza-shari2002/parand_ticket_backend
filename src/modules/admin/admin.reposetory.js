@@ -218,7 +218,8 @@ async function getAllOtpLogs({ limit, offset, phone, is_used }) {
     queryParams.push(is_used);
   }
 
-  const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
+  const whereSql =
+    whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
 
   // شمارش کل لاگ‌ها بر اساس فیلتر
   const countSql = `SELECT COUNT(*) AS total FROM otp_codes ${whereSql}`;
@@ -240,11 +241,91 @@ async function getAllOtpLogs({ limit, offset, phone, is_used }) {
     LIMIT ? OFFSET ?
   `;
 
-  const [rows] = await db.query(dataSql, [...queryParams, Number(limit), Number(offset)]);
+  const [rows] = await db.query(dataSql, [
+    ...queryParams,
+    Number(limit),
+    Number(offset),
+  ]);
 
   return { total, otps: rows };
 }
 
+async function getAllSeats({ limit, offset, type, status }) {
+  let whereClauses = [];
+  let queryParams = [];
+
+  if (type) {
+    whereClauses.push("s.type = ?");
+    queryParams.push(type);
+  }
+  if (status) {
+    whereClauses.push("s.status = ?");
+    queryParams.push(status);
+  }
+
+  const whereSql =
+    whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
+
+  // ۱. شمارش کل صندلی‌ها
+  const countSql = `SELECT COUNT(*) AS total FROM seats s ${whereSql}`;
+  const [[{ total }]] = await db.query(countSql, queryParams);
+
+  // ۲. دریافت جزئیات صندلی‌ها و لینک به بلیت
+  const dataSql = `
+    SELECT 
+      s.id,
+      s.seat_number,
+      s.type,
+      s.status,
+      s.locked_at,
+      s.ticket_id,
+      t.ticket_code
+    FROM seats s
+    LEFT JOIN tickets t ON s.ticket_id = t.id
+    ${whereSql}
+    ORDER BY s.id ASC
+    LIMIT ? OFFSET ?
+  `;
+
+  const [rows] = await db.query(dataSql, [
+    ...queryParams,
+    Number(limit),
+    Number(offset),
+  ]);
+
+  return { total, seats: rows };
+}
+
+
+
+// ۱. دریافت بزرگ‌ترین شماره صندلی برای هر نوع صندلی
+async function getMaxSeatNumbers() {
+  const sql = `
+    SELECT type, COALESCE(MAX(seat_number), 0) AS max_number
+    FROM seats
+    GROUP BY type
+  `;
+  const [rows] = await db.query(sql);
+  
+  // تبدیل خروجی به شکل یک آبجکت تمیز: { gamer: 2, vip: 5, regular: 8 }
+  const maxMap = { gamer: 0, vip: 0, regular: 0 };
+  rows.forEach((r) => {
+    maxMap[r.type] = Number(r.max_number);
+  });
+
+  return maxMap;
+}
+
+// ۲. درج دسته‌ای صندلی‌ها در دیتابیس با یک کوئری
+async function bulkInsertSeats(seatsData) {
+  if (!seatsData || seatsData.length === 0) return 0;
+
+  // seatsData ساختاری مثل این دارد: [[1, 'gamer', 'available'], [2, 'gamer', 'available'], ...]
+  const sql = `INSERT INTO seats (seat_number, type, status) VALUES ?`;
+  const [result] = await db.query(sql, [seatsData]);
+
+  return result.affectedRows;
+}
 
 module.exports = {
   searchTicketForGate,
@@ -253,5 +334,8 @@ module.exports = {
   getAllPaidTickets,
   getAllTransactions,
   getAllUsers,
-  getAllOtpLogs
+  getAllOtpLogs,
+  getAllSeats,
+  getMaxSeatNumbers ,
+  bulkInsertSeats , 
 };
