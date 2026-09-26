@@ -1,4 +1,5 @@
 const ticketsService = require("./tickets.service");
+const EXPIRATION_MINUTES = Number(process.env.TICKET_EXPIRATION_MINUTES) || 15;
 
 async function reserveTicket_controller(req, res, next) {
   try {
@@ -9,7 +10,7 @@ async function reserveTicket_controller(req, res, next) {
 
     return res.status(201).json({
       status: "success",
-      message: "صندلی‌ها با موفقیت به مدت ۱۵ دقیقه برای شما رزرو موقت شدند",
+      message: `صندلی های مورد نظر به مدت ${EXPIRATION_MINUTES} به طور موقت تا پرداخت نهایی برای شما رزرو شدند`,
       data: result
     });
   } catch (err) {
