@@ -11,23 +11,25 @@ router.use(express.json());
 
 router.post(
   "/reserve",
-  iplimiterInapp,
   checkbody_query("reserveTicket", validation.reserveTicket_schema),
   tokenVerify,
+  iplimiterInapp,
   controller.reserveTicket_controller,
 );
 router.get(
   "/my-tickets",
-  iplimiterInapp,
+  
   tokenVerify,
+  iplimiterInapp,
   controller.getMyTickets_controller,
 );
 
 router.get(
   "/:id",
-  iplimiterInapp,
+  
   checkbody_query("viewTicket", validation.getTicketById_schema),
   tokenVerify,
+  iplimiterInapp,
   controller.getTicketById_controller,
 );
 

@@ -1,6 +1,7 @@
 const express = require("express");
 const iplimiter = require("../../middlewares/Iplimiter");
 const iplimiterInapp = require("./middlewares/iplimiterInapp");
+const ipLimiterCallback = require("./middlewares/IplimiterCallback");
 const checkbody_query = require("../../middlewares/checkbody&query");
 const router = express.Router();
 const tokenVerify = require("../../middlewares/Tokenverify");
@@ -11,12 +12,12 @@ router.use(express.json());
 
 router.post(
   "/request",
-  iplimiterInapp,
   tokenVerify,
+  iplimiterInapp,
   checkbody_query("paymentRequest", validation.paymentRequest_schema),
   controller.requestPayment_controller,
 );
 
-router.get("/callback", controller.callbackPayment_controller);
+router.get("/callback",ipLimiterCallback ,  controller.callbackPayment_controller);
 
 module.exports = router;

@@ -73,25 +73,32 @@ async function verifyPayment({ authority, amount }) {
     amount: Number(amount)
   };
 
-  const response = await axios.post(url, payload, { timeout: 10000 });
-  const data = response.data.data;
-  const errors = response.data.errors;
+  try {
+    const response = await axios.post(url, payload, { timeout: 10000 });
+    const data = response.data?.data;
+    const errors = response.data?.errors;
 
-  // کد 100: موفق / کد 101: قبلاً وریفای شده
-  if (data && (data.code === 100 || data.code === 101)) {
+    if (data && (data.code === 100 || data.code === 101)) {
+      return {
+        success: true,
+        refId: data.ref_id,
+        cardPan: data.card_pan,
+        alreadyVerified: data.code === 101
+      };
+    }
+
     return {
-      success: true,
-      refId: data.ref_id,
-      cardPan: data.card_pan,
-      alreadyVerified: data.code === 101
+      success: false,
+      code: errors?.code || data?.code
+    };
+  } catch (error) {
+    return {
+      success: false,
+      code: error.response?.data?.errors?.code || 500
     };
   }
-
-  return {
-    success: false,
-    code: errors?.code || data?.code
-  };
 }
+
 
 module.exports = {
   requestPayment,

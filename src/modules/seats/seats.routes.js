@@ -9,6 +9,6 @@ const controller = require("./seats.controller");
 
 router.use(express.json());
 
-router.get("/capacity" , iplimiterInapp , tokenVerify  , controller.capacity_controller );
+router.get("/capacity"  , tokenVerify , iplimiterInapp , controller.capacity_controller );
 
 module.exports = router;

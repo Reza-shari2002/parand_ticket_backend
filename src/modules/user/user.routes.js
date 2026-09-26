@@ -9,9 +9,9 @@ const router = express.Router();
 
 router.use(express.json());
 
-router.get("/me/profile" , iplimiterInapp , tokenVerify , controller.getProfile_controller);
+router.get("/me/profile" ,  tokenVerify,iplimiterInapp  , controller.getProfile_controller);
 
-router.patch("/me/profile" , iplimiterInapp ,checkbody_query("update_user" ,validation.completeProfileSchema ) ,tokenVerify ,controller.completeProfile_controller );
+router.patch("/me/profile" , checkbody_query("update_user" ,validation.completeProfileSchema ) ,tokenVerify ,iplimiterInapp  ,controller.completeProfile_controller );
 
 
 module.exports = router;

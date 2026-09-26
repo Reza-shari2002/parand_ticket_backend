@@ -19,7 +19,16 @@ async function requestPayment_controller(req, res, next) {
 
 async function callbackPayment_controller(req, res, next) {
   try {
-    const { Authority: authority, Status: status } = req.query;
+    const authority = req.query.Authority || req.query.authority;
+    const status = req.query.Status || req.query.status;
+
+    if (!authority) {
+      // اگر کاربر مستقیم بدون authority وارد لینک کال‌بک شد
+      const frontendUrl = new URL(process.env.FRONTEND_PAYMENT_RESULT_URL);
+      frontendUrl.searchParams.set("success", "false");
+      frontendUrl.searchParams.set("message", "شناسه پرداخت یافت نشد.");
+      return res.redirect(frontendUrl.toString());
+    }
 
     const result = await paymentService.handleCallback_service({ authority, status });
 
@@ -32,7 +41,15 @@ async function callbackPayment_controller(req, res, next) {
 
     return res.redirect(frontendUrl.toString());
   } catch (err) {
-    next(err);
+    // در صورت بروز ارور سرور در کال‌بک، به جای ۵۰۰ دادن بهتر است با پیام خطا به فرانت ریدایرکت شود
+    try {
+      const frontendUrl = new URL(process.env.FRONTEND_PAYMENT_RESULT_URL);
+      frontendUrl.searchParams.set("success", "false");
+      frontendUrl.searchParams.set("message", "خطای سرور در پردازش بازگشت از درگاه.");
+      return res.redirect(frontendUrl.toString());
+    } catch {
+      next(err);
+    }
   }
 }
 

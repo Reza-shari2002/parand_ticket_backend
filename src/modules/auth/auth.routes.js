@@ -10,16 +10,16 @@ router.use(express.json());
 
 router.post(
   "/send-otp",
-  iplimiterotp,
   checkbody_query("sendOtp", validation.sendOtp_shcema),
-  controller.snedOtp_controller
+  iplimiterotp,
+  controller.snedOtp_controller,
 );
 
 router.post(
   "/verify-otp",
-  iplimiter,
   checkbody_query("verify-otp", validation.verifyOtp_schema),
-  controller.verifyOtp_controller
+  iplimiterotp,
+  controller.verifyOtp_controller,
 );
 
 module.exports = router;
