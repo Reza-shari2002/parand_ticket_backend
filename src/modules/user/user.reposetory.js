@@ -24,34 +24,44 @@ async function createUser(phone) {
   }
 }
 
+async function updateUserProfile(
+  connection,
+  userId,
+  { fullName, nationalCode },
+) {
+  const fields = ["full_name = ?"];
+  const values = [fullName];
 
-async function updateUserProfile(connection, userId, fullName, nationalCode) {
-  const [result] = await connection.query(
-    `
+  // فقط در صورتی که nationalCode در ورودی وجود داشت آپدیتش کن
+  if (nationalCode !== undefined) {
+    fields.push("national_code = ?");
+    // اگر رشته خالی فرستاده شده بود، در دیتابیس null ثبت شود
+    values.push(
+      nationalCode === "" || nationalCode === null ? null : nationalCode,
+    );
+  }
+
+  values.push(userId);
+
+  const sql = `
     UPDATE users
-    SET full_name = ?, national_code = ?
+    SET ${fields.join(", ")}
     WHERE id = ?
-    `,
-    [fullName, nationalCode ?? null, userId]
-  );
+  `;
 
+  const [result] = await connection.query(sql, values);
   return result;
 }
 
 async function findUserById(connection, userId) {
   const [rows] = await connection.query(
     `SELECT  phone, role, full_name, national_code, created_at FROM users WHERE id = ? LIMIT 1`,
-    [userId]
+    [userId],
   );
   return rows[0] || null;
 }
-
-
-
 
 module.exports.findUserByPhone = findUserByPhone;
 module.exports.createUser = createUser;
 module.exports.findUserById = findUserById;
 module.exports.updateUserProfile = updateUserProfile;
-
-

@@ -5,12 +5,10 @@ const userRepo = require("./user.reposetory");
 async function completeProfile_service(userId, payload) {
   const connection = await pool.getConnection();
   try {
-    const result = await userRepo.updateUserProfile(
-      connection,
-      userId,
-      payload.full_name,
-      payload.national_code
-    );
+    const result = await userRepo.updateUserProfile(connection, userId, {
+      fullName: payload.full_name,
+      nationalCode: payload.national_code, // اگر نفرستاده باشد، undefined خواهد بود
+    });
 
     if (result.affectedRows === 0) {
       throw new AppError("کاربر یافت نشد.", 404);

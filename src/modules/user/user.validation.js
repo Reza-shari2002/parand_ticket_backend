@@ -30,9 +30,11 @@ const completeProfileSchema = Joi.object({
     .trim()
     .min(2)
     .max(10)
-    .custom(safeText)          // اگر خواستی خالی هم قابل قبول باشد
-    .required()
+    .custom(safeText)
+    .allow("", null) // این دو مورد برای فیلد اختیاری الزامی است تا خطای empty نخورد
+    .optional()
     .messages({
+      "string.min": "کد/شناسه واردشده خیلی کوتاه است.",
       "string.max": "کد/شناسه واردشده خیلی طولانی است.",
       "string.controlChars": "کد/شناسه شامل کاراکتر غیرمجاز است.",
     }),
