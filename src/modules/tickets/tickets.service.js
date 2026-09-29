@@ -4,11 +4,11 @@ const ticketsRepo = require("./tickets.reposetory");
 const AppError = require("../../config/AppErrore");
 const EXPIRATION_MINUTES = Number(process.env.TICKET_EXPIRATION_MINUTES) || 15;
 
-// قیمت‌گذاری پایه بر اساس نوع (تومان) - این مقادیر رو بر اساس سیاست خودت تنظیم کن
+// قیمت‌گذاری پایه بر اساس نوع (تومان)
 const TICKET_PRICES = {
-  gamer: 150000,
-  vip: 100000,
-  regular: 50000,
+  gamer: 10000000,
+  vip: 12000000,
+  regular: 8000000,
 };
 
 // تابع کمکی پیدا کردن صندلی‌های متوالی
@@ -79,7 +79,6 @@ async function reserveTicket_service(userId, { type, count }) {
 
     if (pendingTicketIds.length > 0) {
       await ticketsRepo.releaseSeatsByTicketIds(connection, pendingTicketIds);
-
       await ticketsRepo.expirePendingTickets(connection, pendingTicketIds);
     }
 
@@ -88,19 +87,16 @@ async function reserveTicket_service(userId, { type, count }) {
       type,
     );
 
-    let selectedSeats;
+    // برای گیمر دقیقاً ۱ صندلی، برای بقیه مقدار count در نظر گرفته می‌شود
     const actualQuantity = type === "gamer" ? 1 : count;
 
-    if (type === "gamer") {
-      if (availableSeats.length === 0) {
-        throw new AppError("هیچ جایگاه گیمر آزادی وجود ندارد", 409);
-      }
+    // پیدا کردن صندلی متوالی برای همه انواع (شامل گیمر با ۱ صندلی)
+    const selectedSeats = findConsecutiveSeats(availableSeats, actualQuantity);
 
-      selectedSeats = [availableSeats[0]];
-    } else {
-      selectedSeats = findConsecutiveSeats(availableSeats, actualQuantity);
-
-      if (!selectedSeats) {
+    if (!selectedSeats) {
+      if (type === "gamer") {
+        throw new AppError("هیچ جایگاه گیمر آزادی وجود ندارد.", 409);
+      } else {
         throw new AppError(
           `${actualQuantity} صندلی متوالی برای این بخش موجود نیست.`,
           409,
@@ -108,8 +104,7 @@ async function reserveTicket_service(userId, { type, count }) {
       }
     }
 
-    const ticketCode = `TC-${crypto.randomInt(100000, 1000000)}`;
-
+    const ticketCode = `TC-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
     const totalAmount = TICKET_PRICES[type] * actualQuantity;
 
     const ticketId = await ticketsRepo.createTicket(connection, {
@@ -134,7 +129,7 @@ async function reserveTicket_service(userId, { type, count }) {
       totalAmount,
       seats: selectedSeats.map((seat) => seat.seat_number),
       previousReservationReplaced: pendingTicketIds.length > 0,
-      expiresInMinutes: EXPIRATION_MINUTES, // اینجا هم متغیر قرار می‌گیرد
+      expiresInMinutes: EXPIRATION_MINUTES,
     };
   } catch (error) {
     await connection.rollback();
@@ -145,19 +140,16 @@ async function reserveTicket_service(userId, { type, count }) {
 }
 
 async function getTicketById_service(ticketId, userId) {
-  // ۱. گرفتن اطلاعات بلیط
   const ticket = await ticketsRepo.getTicketById(ticketId);
 
   if (!ticket) {
     throw new AppError("بلیط مورد نظر یافت نشد.", 404);
   }
 
-  // ۲. بررسی مالکیت بلیط (امنیت)
   if (ticket.user_id !== userId) {
     throw new AppError("شما اجازه دسترسی به این بلیط را ندارید.", 403);
   }
 
-  // ۳. گرفتن صندلی‌های مربوط به این بلیط
   const seats = await ticketsRepo.getSeatsByTicketId(ticketId);
 
   return {
@@ -169,7 +161,7 @@ async function getTicketById_service(ticketId, userId) {
     status: ticket.status,
     seats: seats.map((s) => s.seat_number),
     createdAt: ticket.created_at,
-        user: {
+    user: {
       id: ticket.user_id,
       phone: ticket.phone,
       fullName: ticket.full_name,
@@ -185,34 +177,34 @@ async function getMyTickets_service(userId) {
 
     return tickets.map((ticket) => ({
       ...ticket,
-      seats: typeof ticket.seats === "string" ? JSON.parse(ticket.seats) : (ticket.seats || []),
+      seats:
+        typeof ticket.seats === "string"
+          ? JSON.parse(ticket.seats)
+          : ticket.seats || [],
     }));
   } finally {
     connection.release();
   }
 }
 
-
 async function cancelTicket_service(ticketId) {
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
 
-    // ۱. بررسی وجود بلیط
     const ticket = await ticketsRepo.getTicketById(ticketId);
     if (!ticket) {
       throw new AppError("بلیط یافت نشد.", 404);
     }
 
-    // ۲. آزادسازی صندلی‌ها (چه فروخته شده چه قفل شده)
     await ticketsRepo.releaseAllSeatsByTicketId(connection, ticketId);
-
-    // ۳. تغییر وضعیت بلیط به expired
-    await ticketsRepo.updateTicketStatus(connection, ticketId, 'expired');
+    await ticketsRepo.updateTicketStatus(connection, ticketId, "expired");
 
     await connection.commit();
-    return { success: true, message: "بلیط با موفقیت ابطال و صندلی‌ها آزاد شدند." };
-
+    return {
+      success: true,
+      message: "بلیط با موفقیت ابطال و صندلی‌ها آزاد شدند.",
+    };
   } catch (error) {
     await connection.rollback();
     throw error;
@@ -225,5 +217,5 @@ module.exports = {
   reserveTicket_service,
   getTicketById_service,
   getMyTickets_service,
-  cancelTicket_service
+  cancelTicket_service,
 };
