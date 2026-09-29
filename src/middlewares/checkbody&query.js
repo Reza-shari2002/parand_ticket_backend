@@ -224,7 +224,8 @@ function checkbody_query(item, schema) {
     };
   } else if (item === "allTickets") {
     return function (req, res, next) {
-      const params = req.params;
+      const params = req.query;
+      
 
       if (!params) {
         return res.status(400).json({ message: " request must have params" });
@@ -235,12 +236,13 @@ function checkbody_query(item, schema) {
         console.log(`validation body :  ${error.details[0].message}`);
         return next(new AppError(error.details[0].message, 400));
       }
+     
       req.filter = value; // شامل type و count
       return next();
     };
   } else if (item === "allTransaction") {
     return function (req, res, next) {
-      const params = req.params;
+      const params = req.query;
 
       if (!params) {
         return res.status(400).json({ message: " request must have params" });
@@ -256,7 +258,7 @@ function checkbody_query(item, schema) {
     };
   } else if (item === "allUsers") {
     return function (req, res, next) {
-      const params = req.params;
+      const params = req.query;
 
       if (!params) {
         return res.status(400).json({ message: " request must have params" });
@@ -272,7 +274,7 @@ function checkbody_query(item, schema) {
     };
   } else if (item === "allOtp") {
     return function (req, res, next) {
-      const params = req.params;
+      const params = req.query;
 
       if (!params) {
         return res.status(400).json({ message: " request must have params" });
@@ -288,7 +290,7 @@ function checkbody_query(item, schema) {
     };
   } else if (item === "allSeats") {
     return function (req, res, next) {
-      const params = req.params;
+      const params = req.query;
 
       if (!params) {
         return res.status(400).json({ message: " request must have params" });

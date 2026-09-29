@@ -57,7 +57,7 @@ const getOtpLogs_schema = Joi.object({
 
 const getSeats_schema = Joi.object({
   page: Joi.number().integer().min(1).default(1),
-  limit: Joi.number().integer().min(1).max(100).default(20),
+  limit: Joi.number().integer().min(1).max(1000).default(20),
   type: Joi.string().valid("gamer", "vip", "regular").optional(),
   status: Joi.string().valid("available", "locked", "sold").optional()
 });
