@@ -79,6 +79,12 @@ async function sendOtplookup(phone_number, otpcode) {
   }
 }
 
+async function sendOtpsendarray(phone_number, otpcode) {
+  const message = `به اولین مسابقات پلی استیشن پرند کاپ خوش امدید
+کد ورود ${otpcode}`;
+
+  const response = await SendNotificationApi([message], [phone_number]);
+}
 
 module.exports.SendNotification_submit_third_party =
   SendNotification_submit_third_party;
