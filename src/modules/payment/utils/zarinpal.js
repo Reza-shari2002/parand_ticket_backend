@@ -1,7 +1,5 @@
 const axios = require("axios");
 
-
-
 const MERCHANT_ID = process.env.ZARINPAL_MERCHANT_ID || "40000000-0000-0000-0000-000000000000";
 const IS_SANDBOX = process.env.ZARINPAL_SANDBOX === "true";
 
@@ -13,23 +11,26 @@ const GATEWAY_URL = IS_SANDBOX
   ? "https://sandbox.zarinpal.com/pg/StartPay"
   : "https://www.zarinpal.com/pg/StartPay";
 
+// درخواست ایجاد تراکنش
 async function requestPayment({ amount, description, callbackUrl, mobile, email }) {
   const url = `${BASE_URL}/request.json`;
-
   const formattedAmount = Math.floor(Number(amount));
 
-  const mobileStr = mobile === undefined || mobile === null ? "" : String(mobile);
-  const emailStr = email === undefined || email === null ? "" : String(email);
+  // آماده‌سازی metadata: فیلدهای خالی را نباید بفرستیم
+  const metadata = {};
+  if (mobile && String(mobile).trim()) {
+    metadata.mobile = String(mobile).trim();
+  }
+  if (email && String(email).trim()) {
+    metadata.email = String(email).trim();
+  }
 
   const payload = {
     merchant_id: MERCHANT_ID,
     amount: formattedAmount,
     description: description || "خرید بلیط پرند کاپ",
     callback_url: callbackUrl,
-    metadata: {
-      mobile: mobileStr,
-      email: emailStr
-    }
+    ...(Object.keys(metadata).length > 0 && { metadata }) // فقط در صورت وجود مقادیر ارسال می‌شود
   };
 
   try {
@@ -41,8 +42,8 @@ async function requestPayment({ amount, description, callbackUrl, mobile, email 
       timeout: 10000
     });
 
-    const data = response.data.data;
-    const errors = response.data.errors;
+    const data = response.data?.data;
+    const errors = response.data?.errors;
 
     if (errors && Object.keys(errors).length > 0) {
       console.error("Zarinpal API Errors Payload:", errors);
@@ -64,17 +65,27 @@ async function requestPayment({ amount, description, callbackUrl, mobile, email 
     throw error;
   }
 }
+
 // تایید تراکنش پس از بازگشت کاربر
 async function verifyPayment({ authority, amount }) {
   const url = `${BASE_URL}/verify.json`;
+  const formattedAmount = Math.floor(Number(amount));
+
   const payload = {
     merchant_id: MERCHANT_ID,
     authority,
-    amount: Number(amount)
+    amount: formattedAmount
   };
 
   try {
-    const response = await axios.post(url, payload, { timeout: 10000 });
+    const response = await axios.post(url, payload, {
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      timeout: 10000
+    });
+
     const data = response.data?.data;
     const errors = response.data?.errors;
 
@@ -89,7 +100,7 @@ async function verifyPayment({ authority, amount }) {
 
     return {
       success: false,
-      code: errors?.code || data?.code
+      code: errors?.code || data?.code || -1
     };
   } catch (error) {
     return {
@@ -98,7 +109,6 @@ async function verifyPayment({ authority, amount }) {
     };
   }
 }
-
 
 module.exports = {
   requestPayment,
