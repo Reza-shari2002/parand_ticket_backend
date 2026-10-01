@@ -6,7 +6,7 @@ const EXPIRATION_MINUTES = Number(process.env.TICKET_EXPIRATION_MINUTES) || 15;
 
 // قیمت‌گذاری پایه بر اساس نوع (تومان)
 const TICKET_PRICES = {
-  gamer: 10000000,
+  gamer: 100000,
   vip: 12000000,
   regular: 8000000,
 };
