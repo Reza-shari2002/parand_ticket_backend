@@ -2,16 +2,11 @@ const crypto = require("crypto");
 const db = require("../../config/db");
 const ticketsRepo = require("./tickets.reposetory");
 const AppError = require("../../config/AppErrore");
+const settingsRepo = require("../setting/setting.reposetory");
+
 const EXPIRATION_MINUTES = Number(process.env.TICKET_EXPIRATION_MINUTES) || 15;
 
-// قیمت‌گذاری پایه بر اساس نوع (تومان)
-const TICKET_PRICES = {
-  gamer: 100000,
-  vip: 12000000,
-  regular: 8000000,
-};
 
-// تابع کمکی پیدا کردن صندلی‌های متوالی
 function findConsecutiveSeats(seats, count) {
   if (seats.length < count) return null;
 
@@ -49,6 +44,24 @@ async function reserveTicket_service(userId, { type, count }) {
     }
 
     await ticketsRepo.expireOldPendingTickets(connection);
+
+    const settings = await settingsRepo.getSettings(connection);
+
+    if (!settings) {
+      throw new AppError("تنظیمات سیستم یافت نشد.", 500);
+    }
+
+    const priceByType = {
+      gamer: settings.gamer_price,
+      vip: settings.vip_price,
+      regular: settings.regular_price,
+    };
+
+    const unitPrice = Number(priceByType[type]);
+
+    if (!Number.isSafeInteger(unitPrice) || unitPrice < 0) {
+      throw new AppError("قیمت بلیت معتبر نیست.", 500);
+    }
 
     const paidTicket = await ticketsRepo.findPaidTicketByUserAndType(
       connection,
@@ -105,7 +118,7 @@ async function reserveTicket_service(userId, { type, count }) {
     }
 
     const ticketCode = `TC-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
-    const totalAmount = TICKET_PRICES[type] * actualQuantity;
+    const totalAmount = unitPrice * actualQuantity;
 
     const ticketId = await ticketsRepo.createTicket(connection, {
       userId,

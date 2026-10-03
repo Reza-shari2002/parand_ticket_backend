@@ -8,6 +8,7 @@ const paymentRouter = require("../modules/payment/payment.routes");
 const userRouter = require("../modules/user/user.routes");
 const AdminRouter = require("../modules/admin/admin.routes");
 const Setting = require("../modules/setting/setting.routes");
+const RefundRouter = require("../modules/refund/refund.routes");
 const router  = express.Router()
 
 
@@ -30,5 +31,7 @@ router.use("/user" , userRouter);
 router.use("/admin" , AdminRouter);
 
 router.use("/setting" ,Setting);
+
+router.use("/refund" , RefundRouter);
 
 module.exports = router;

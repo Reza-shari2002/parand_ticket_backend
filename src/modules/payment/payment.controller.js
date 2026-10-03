@@ -1,4 +1,6 @@
 const paymentService = require("./payment.service");
+const notificationService = require("../notification/notification.service");
+const logger = require("../../config/logger");
 
 async function requestPayment_controller(req, res, next) {
   try {
@@ -6,11 +8,15 @@ async function requestPayment_controller(req, res, next) {
     const userId = req.user.id;
     const userPhone = req.user.phone;
     console.log(userPhone);
-    const result = await paymentService.requestPayment_service(ticketId, userId, userPhone);
+    const result = await paymentService.requestPayment_service(
+      ticketId,
+      userId,
+      userPhone,
+    );
 
     return res.status(200).json({
       status: "success",
-      data: result // شامل { paymentUrl }
+      data: result, // شامل { paymentUrl }
     });
   } catch (err) {
     next(err);
@@ -19,7 +25,9 @@ async function requestPayment_controller(req, res, next) {
 
 async function callbackPayment_controller(req, res, next) {
   // گرفتن آدرس فرانت با مقدار پیش‌فرض امن جهت جلوگیری از خطا در صورت نبود env
-  const defaultFrontendUrl = process.env.FRONTEND_PAYMENT_RESULT_URL || "https://parandcup.ir/payment/result";
+  const defaultFrontendUrl =
+    process.env.FRONTEND_PAYMENT_RESULT_URL ||
+    "https://parandcup.ir/payment/result";
 
   try {
     const authority = req.query.Authority || req.query.authority;
@@ -33,12 +41,15 @@ async function callbackPayment_controller(req, res, next) {
       return res.redirect(frontendUrl.toString());
     }
 
-    const result = await paymentService.handleCallback_service({ authority, status });
+    const result = await paymentService.handleCallback_service({
+      authority,
+      status,
+    });
 
     // هدایت نهایی به فرانت‌اند همراه با کوئری‌پارامترها
     const frontendUrl = new URL(defaultFrontendUrl);
     frontendUrl.searchParams.set("success", result.success ? "true" : "false");
-    
+
     if (result.refId) {
       frontendUrl.searchParams.set("refId", String(result.refId));
     }
@@ -49,13 +60,27 @@ async function callbackPayment_controller(req, res, next) {
       frontendUrl.searchParams.set("message", String(result.message));
     }
 
+    // ارسال پیامک در پس‌زمینه بدون مسدود کردن ریدایرکت کاربر
+    // فقط در صورتی که پرداخت موفق بوده و ticketId وجود دارد
+    if (result.success && result.ticketId) {
+      notificationService.Submit_payment(result.ticketId).catch((smsErr) => {
+        // خطای پیامک فقط لاگ می‌شود و فرآیند خرید کاربر را مختل نمی‌کند
+        logger.error(
+          `خطا در ارسال پیامک خرید برای بلیط ${result.ticketId}: ${smsErr.message || smsErr}`,
+        );
+      });
+    }
+
     return res.redirect(frontendUrl.toString());
   } catch (err) {
     // در صورت بروز خطای داخلی در سرور، کاربر را با پیام خطا به فرانت ریدایرکت می‌کنیم
     try {
       const frontendUrl = new URL(defaultFrontendUrl);
       frontendUrl.searchParams.set("success", "false");
-      frontendUrl.searchParams.set("message", "خطای سرور در پردازش بازگشت از درگاه.");
+      frontendUrl.searchParams.set(
+        "message",
+        "خطای سرور در پردازش بازگشت از درگاه.",
+      );
       return res.redirect(frontendUrl.toString());
     } catch (redirectErr) {
       next(err);
@@ -63,8 +88,7 @@ async function callbackPayment_controller(req, res, next) {
   }
 }
 
-
 module.exports = {
   requestPayment_controller,
-  callbackPayment_controller
+  callbackPayment_controller,
 };

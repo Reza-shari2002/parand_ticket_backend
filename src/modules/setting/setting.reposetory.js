@@ -1,6 +1,5 @@
 const db = require("../../config/db");
 
-// گرفتن رکورد تنظیمات با قفل برای آپدیت
 async function getSettingsForUpdate(connection) {
   const sql = `
     SELECT 
@@ -11,6 +10,15 @@ async function getSettingsForUpdate(connection) {
       vip_message,
       regular_message,
       gamer_message,
+      vip_location,
+      regular_location,
+      gamer_location,
+      vip_price,
+      regular_price,
+      gamer_price,
+      vip_event_date,
+      regular_event_date,
+      gamer_event_date,
       updated_at
     FROM settings
     ORDER BY id ASC
@@ -22,7 +30,6 @@ async function getSettingsForUpdate(connection) {
   return rows[0] || null;
 }
 
-// گرفتن رکورد تنظیمات بدون قفل
 async function getSettings(connection) {
   const sql = `
     SELECT 
@@ -33,6 +40,15 @@ async function getSettings(connection) {
       vip_message,
       regular_message,
       gamer_message,
+      vip_location,
+      regular_location,
+      gamer_location,
+      vip_price,
+      regular_price,
+      gamer_price,
+      vip_event_date,
+      regular_event_date,
+      gamer_event_date,
       updated_at
     FROM settings
     ORDER BY id ASC
@@ -43,7 +59,6 @@ async function getSettings(connection) {
   return rows[0] || null;
 }
 
-// آپدیت رکورد تنظیمات
 async function updateSettingsById(connection, settingId, payload) {
   const fields = [];
   const values = [];
@@ -78,6 +93,51 @@ async function updateSettingsById(connection, settingId, payload) {
     values.push(payload.gamer_message);
   }
 
+  if (payload.vip_location !== undefined) {
+    fields.push("vip_location = ?");
+    values.push(payload.vip_location);
+  }
+
+  if (payload.regular_location !== undefined) {
+    fields.push("regular_location = ?");
+    values.push(payload.regular_location);
+  }
+
+  if (payload.gamer_location !== undefined) {
+    fields.push("gamer_location = ?");
+    values.push(payload.gamer_location);
+  }
+
+  if (payload.vip_price !== undefined) {
+    fields.push("vip_price = ?");
+    values.push(payload.vip_price);
+  }
+
+  if (payload.regular_price !== undefined) {
+    fields.push("regular_price = ?");
+    values.push(payload.regular_price);
+  }
+
+  if (payload.gamer_price !== undefined) {
+    fields.push("gamer_price = ?");
+    values.push(payload.gamer_price);
+  }
+
+  if (payload.vip_event_date !== undefined) {
+    fields.push("vip_event_date = ?");
+    values.push(payload.vip_event_date);
+  }
+
+  if (payload.regular_event_date !== undefined) {
+    fields.push("regular_event_date = ?");
+    values.push(payload.regular_event_date);
+  }
+
+  if (payload.gamer_event_date !== undefined) {
+    fields.push("gamer_event_date = ?");
+    values.push(payload.gamer_event_date);
+  }
+
   if (!fields.length) {
     return { affectedRows: 0 };
   }
@@ -102,7 +162,16 @@ async function getSettingsPublic(connection) {
       is_gamer_active,
       vip_message,
       regular_message,
-      gamer_message
+      gamer_message,
+      vip_location,
+      regular_location,
+      gamer_location,
+      vip_price,
+      regular_price,
+      gamer_price,
+      vip_event_date,
+      regular_event_date,
+      gamer_event_date
     FROM settings
     ORDER BY id ASC
     LIMIT 1
@@ -114,25 +183,16 @@ async function getSettingsPublic(connection) {
 
 async function getSettingsDirect() {
   const sql = `
-    SELECT 
-      is_vip_active,
-      is_regular_active,
-      is_gamer_active,
-      vip_message,
-      regular_message,
-      gamer_message
-    FROM settings
-    ORDER BY id ASC
-    LIMIT 1
+    SELECT * FROM settings ORDER BY id ASC LIMIT 1
   `;
-  const [rows] = await db.query(sql);
+  // فرض بر این است که db همان pool شماست
+  const [rows] = await db.query(sql); 
   return rows[0] || null;
 }
-
 module.exports = {
   getSettingsForUpdate,
   getSettings,
   updateSettingsById,
   getSettingsPublic,
-  getSettingsDirect,
+  getSettingsDirect  , 
 };
