@@ -50,7 +50,6 @@ async function createRefundRequest_service(body, user) {
       ticket_id: body.ticket_id,
       phone: user.phone, 
       national_code: body.national_code,
-      iban: String(body.iban).toUpperCase().trim(),
       card_number: normalizeCardNumber(body.card_number),
       full_name: body.full_name?.trim(),
     };
