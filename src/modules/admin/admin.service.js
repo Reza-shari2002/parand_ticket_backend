@@ -3,16 +3,22 @@ const AppError = require("../../config/AppErrore");
 
 async function verifyTicket_service(searchQuery) {
   if (!searchQuery || !searchQuery.trim()) {
-    throw new AppError("لطفاً عبارت جستجو (کد بلیت، شماره موبایل، کدملی یا نام) را ارسال کنید.", 400);
+    throw new AppError(
+      "لطفاً عبارت جستجو (کد بلیت، شماره موبایل، کدملی یا نام) را ارسال کنید.",
+      400,
+    );
   }
 
   const rawTickets = await adminRepo.searchTicketForGate(searchQuery);
 
   // تبدیل ستون JSON seats به آرایه واقعی جاوااسکریپت و حذف مقادیر null
   const tickets = rawTickets.map((ticket) => {
-    let seats = typeof ticket.seats === "string" ? JSON.parse(ticket.seats) : ticket.seats;
+    let seats =
+      typeof ticket.seats === "string"
+        ? JSON.parse(ticket.seats)
+        : ticket.seats;
     seats = Array.isArray(seats) ? seats.filter(Boolean) : [];
-    
+
     return {
       ticket_id: ticket.ticket_id,
       ticket_code: ticket.ticket_code,
@@ -26,15 +32,14 @@ async function verifyTicket_service(searchQuery) {
         user_id: ticket.user_id,
         phone: ticket.phone,
         full_name: ticket.full_name,
-        national_code: ticket.national_code
+        national_code: ticket.national_code,
       },
-      seats: seats
+      seats: seats,
     };
   });
 
   return tickets;
 }
-
 
 async function useTicket_service(ticketId) {
   // ۱. بررسی وجود بلیت
@@ -50,7 +55,10 @@ async function useTicket_service(ticketId) {
 
   // ۳. بررسی استفاده قبلی
   if (ticket.is_used === 1) {
-    throw new AppError("این بلیت قبلاً استفاده شده است و امکان ورود مجدد وجود ندارد.", 400);
+    throw new AppError(
+      "این بلیت قبلاً استفاده شده است و امکان ورود مجدد وجود ندارد.",
+      400,
+    );
   }
 
   // ۴. آپدیت کردن وضعیت
@@ -59,13 +67,17 @@ async function useTicket_service(ticketId) {
   return {
     ticket_id: ticket.id,
     ticket_code: ticket.ticket_code,
-    is_used: true
+    is_used: true,
   };
 }
 
 async function getAdminTicketsReport_service({ page, limit, type }) {
   const offset = (page - 1) * limit;
-  const { total, tickets: rawTickets } = await adminRepo.getAllPaidTickets({ limit, offset, type });
+  const { total, tickets: rawTickets } = await adminRepo.getAllPaidTickets({
+    limit,
+    offset,
+    type,
+  });
 
   const tickets = rawTickets.map((t) => {
     let seats = typeof t.seats === "string" ? JSON.parse(t.seats) : t.seats;
@@ -84,9 +96,9 @@ async function getAdminTicketsReport_service({ page, limit, type }) {
         user_id: t.user_id,
         phone: t.phone,
         full_name: t.full_name,
-        national_code: t.national_code
+        national_code: t.national_code,
       },
-      seats
+      seats,
     };
   });
 
@@ -95,51 +107,56 @@ async function getAdminTicketsReport_service({ page, limit, type }) {
       total,
       page: Number(page),
       limit: Number(limit),
-      totalPages: Math.ceil(total / limit)
+      totalPages: Math.ceil(total / limit),
     },
-    tickets
+    tickets,
   };
 }
 
-
 async function getTransactionsReport_service({ page, limit }) {
   const offset = (page - 1) * limit;
-  const { total, transactions } = await adminRepo.getAllTransactions({ limit, offset });
+  const { total, transactions } = await adminRepo.getAllTransactions({
+    limit,
+    offset,
+  });
 
   return {
     pagination: {
       total,
       page: Number(page),
       limit: Number(limit),
-      totalPages: Math.ceil(total / limit)
+      totalPages: Math.ceil(total / limit),
     },
-    transactions
+    transactions,
   };
 }
 
 async function getUsersReport_service({ page, limit, search }) {
   const offset = (page - 1) * limit;
-  const { total, users } = await adminRepo.getAllUsers({ limit, offset, search });
+  const { total, users } = await adminRepo.getAllUsers({
+    limit,
+    offset,
+    search,
+  });
 
   return {
     pagination: {
       total,
       page: Number(page),
       limit: Number(limit),
-      totalPages: Math.ceil(total / limit)
+      totalPages: Math.ceil(total / limit),
     },
-    users
+    users,
   };
 }
 
-
 async function getOtpLogsReport_service({ page, limit, phone, is_used }) {
   const offset = (page - 1) * limit;
-  const { total, otps: rawOtps } = await adminRepo.getAllOtpLogs({ 
-    limit, 
-    offset, 
-    phone, 
-    is_used 
+  const { total, otps: rawOtps } = await adminRepo.getAllOtpLogs({
+    limit,
+    offset,
+    phone,
+    is_used,
   });
 
   const otps = rawOtps.map((otp) => ({
@@ -149,7 +166,7 @@ async function getOtpLogsReport_service({ page, limit, phone, is_used }) {
     is_used: Boolean(otp.is_used),
     is_expired: Boolean(otp.is_expired),
     expires_at: otp.expires_at,
-    created_at: otp.created_at
+    created_at: otp.created_at,
   }));
 
   return {
@@ -157,31 +174,34 @@ async function getOtpLogsReport_service({ page, limit, phone, is_used }) {
       total,
       page: Number(page),
       limit: Number(limit),
-      totalPages: Math.ceil(total / limit)
+      totalPages: Math.ceil(total / limit),
     },
-    otps
+    otps,
   };
 }
 
-
 async function getSeatsReport_service({ page, limit, type, status }) {
   const offset = (page - 1) * limit;
-  const { total, seats } = await adminRepo.getAllSeats({ limit, offset, type, status });
+  const { total, seats } = await adminRepo.getAllSeats({
+    limit,
+    offset,
+    type,
+    status,
+  });
 
   return {
     pagination: {
       total,
       page: Number(page),
       limit: Number(limit),
-      totalPages: Math.ceil(total / limit)
+      totalPages: Math.ceil(total / limit),
     },
-    seats: seats.map(s => ({
+    seats: seats.map((s) => ({
       ...s,
-      is_locked: s.status === 'locked'
-    }))
+      is_locked: s.status === "locked",
+    })),
   };
 }
-
 
 async function generateSeats_service({ gamer = 0, vip = 0, regular = 0 }) {
   // ۱. گرفتن آخرین شماره صندلی‌های موجود در دیتابیس
@@ -191,7 +211,7 @@ async function generateSeats_service({ gamer = 0, vip = 0, regular = 0 }) {
   const generatedSummary = {
     gamer: { count: gamer, from: 0, to: 0 },
     vip: { count: vip, from: 0, to: 0 },
-    regular: { count: regular, from: 0, to: 0 }
+    regular: { count: regular, from: 0, to: 0 },
   };
 
   // فانکشن کمکی برای تولید ردیف‌های هر نوع صندلی
@@ -208,7 +228,7 @@ async function generateSeats_service({ gamer = 0, vip = 0, regular = 0 }) {
     generatedSummary[type] = {
       count,
       from: startFrom,
-      to: endAt
+      to: endAt,
     };
   };
 
@@ -221,19 +241,64 @@ async function generateSeats_service({ gamer = 0, vip = 0, regular = 0 }) {
 
   return {
     total_created: insertedCount,
-    details: generatedSummary
+    details: generatedSummary,
   };
 }
 
+async function getRefundRequestsReport_service({
+  page,
+  limit,
+  phone,
+  national_code,
+  full_name,
+  ticket_id,
+  status,
+}) {
+  const offset = (page - 1) * limit;
 
+  const { total, refunds: rawRefunds } = await adminRepo.getAllRefundRequests({
+    limit,
+    offset,
+    phone,
+    national_code,
+    full_name,
+    ticket_id,
+    status,
+  });
+
+  const refunds = rawRefunds.map((refund) => ({
+    id: refund.id,
+    ticket_id: refund.ticket_id,
+    phone: refund.phone,
+    national_code: refund.national_code,
+    iban: refund.iban,
+    card_number: refund.card_number,
+    full_name: refund.full_name,
+    status: refund.status,
+    admin_note: refund.admin_note,
+    created_at: refund.created_at,
+    updated_at: refund.updated_at,
+  }));
+
+  return {
+    pagination: {
+      total: Number(total),
+      page: Number(page),
+      limit: Number(limit),
+      totalPages: Math.ceil(Number(total) / Number(limit)),
+    },
+    refunds,
+  };
+}
 
 module.exports = {
-  verifyTicket_service , 
-  useTicket_service  , 
-  getAdminTicketsReport_service ,
-  getTransactionsReport_service , 
-  getUsersReport_service , 
-  getOtpLogsReport_service , 
-  getSeatsReport_service ,
-  generateSeats_service ,  
+  verifyTicket_service,
+  useTicket_service,
+  getAdminTicketsReport_service,
+  getTransactionsReport_service,
+  getUsersReport_service,
+  getOtpLogsReport_service,
+  getSeatsReport_service,
+  generateSeats_service,
+  getRefundRequestsReport_service,
 };

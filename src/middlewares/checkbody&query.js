@@ -371,6 +371,34 @@ function checkbody_query(item, schema) {
       return next();
     };
   }
+  else if (item === "allRefundRequests") {
+  return function (req, res, next) {
+    const params = req.query;
+
+    if (!params) {
+      return res.status(400).json({
+        message: "request must have params",
+      });
+    }
+
+    const { error, value } = schema.validate(params, {
+      convert: true,
+    });
+
+    if (error) {
+      logger.error(`validation query: ${error.details[0].message}`);
+
+      return next(
+        new AppError(error.details[0].message, 400)
+      );
+    }
+
+    req.filter = value;
+
+    return next();
+  };
+}
+
 }
 
 module.exports = checkbody_query;

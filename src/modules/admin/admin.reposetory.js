@@ -327,6 +327,96 @@ async function bulkInsertSeats(seatsData) {
   return result.affectedRows;
 }
 
+
+async function getAllRefundRequests({
+  limit,
+  offset,
+  phone,
+  national_code,
+  full_name,
+  ticket_id,
+  status,
+}) {
+  const whereClauses = [];
+  const queryParams = [];
+
+  if (phone) {
+    whereClauses.push("phone LIKE ?");
+    queryParams.push(`%${phone}%`);
+  }
+
+  if (national_code) {
+    whereClauses.push("national_code LIKE ?");
+    queryParams.push(`%${national_code}%`);
+  }
+
+  if (full_name) {
+    whereClauses.push("full_name LIKE ?");
+    queryParams.push(`%${full_name}%`);
+  }
+
+  if (
+    ticket_id !== undefined &&
+    ticket_id !== null &&
+    ticket_id !== ""
+  ) {
+    whereClauses.push("ticket_id = ?");
+    queryParams.push(Number(ticket_id));
+  }
+
+  if (status) {
+    whereClauses.push("status = ?");
+    queryParams.push(status);
+  }
+
+  const whereSql =
+    whereClauses.length > 0
+      ? `WHERE ${whereClauses.join(" AND ")}`
+      : "";
+
+  const countSql = `
+    SELECT COUNT(*) AS total
+    FROM refund_requests
+    ${whereSql}
+  `;
+
+  const [[countResult]] = await db.query(
+    countSql,
+    queryParams
+  );
+
+  const dataSql = `
+    SELECT
+      id,
+      ticket_id,
+      phone,
+      national_code,
+      iban,
+      card_number,
+      full_name,
+      status,
+      admin_note,
+      created_at,
+      updated_at
+    FROM refund_requests
+    ${whereSql}
+    ORDER BY created_at DESC
+    LIMIT ? OFFSET ?
+  `;
+
+  const [rows] = await db.query(dataSql, [
+    ...queryParams,
+    Number(limit),
+    Number(offset),
+  ]);
+
+  return {
+    total: Number(countResult.total),
+    refunds: rows,
+  };
+}
+
+
 module.exports = {
   searchTicketForGate,
   getTicketById,
@@ -338,4 +428,5 @@ module.exports = {
   getAllSeats,
   getMaxSeatNumbers ,
   bulkInsertSeats , 
+  getAllRefundRequests
 };

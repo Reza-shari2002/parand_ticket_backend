@@ -9,7 +9,7 @@ async function sendOtp_service(phone_number) {
   try {
     const otp_code = crypto.randomInt(100000, 1000000).toString();
     const result = await reposetory.insertOtp(phone_number, otp_code);
-    const result2 = await notificationService.sendOtplookup(      phone_number,      otp_code,   );
+    //const result2 = await notificationService.sendOtplookup(      phone_number,      otp_code,   );
     return;
   } catch (err) {
     throw err;

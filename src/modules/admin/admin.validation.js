@@ -84,6 +84,39 @@ const generateSeats_schema = Joi.object({
   return value;
 });
 
+const getRefundRequests_schema = Joi.object({
+  page: Joi.number().integer().min(1).default(1),
+
+  limit: Joi.number().integer().min(1).max(100).default(20),
+
+  phone: Joi.string().trim().max(15).optional().allow("").messages({
+    "string.base": "شماره تلفن باید متن باشد.",
+    "string.max": "شماره تلفن نمی‌تواند بیشتر از ۱۵ کاراکتر باشد.",
+  }),
+
+  national_code: Joi.string().trim().max(10).optional().allow("").messages({
+    "string.base": "کد ملی باید متن باشد.",
+    "string.max": "کد ملی نمی‌تواند بیشتر از ۱۰ کاراکتر باشد.",
+  }),
+
+  ticket_id: Joi.number().integer().min(1).optional().messages({
+    "number.base": "شناسه تیکت باید عدد باشد.",
+    "number.integer": "شناسه تیکت باید عدد صحیح باشد.",
+  }),
+
+  full_name: Joi.string().trim().max(100).optional().allow("").messages({
+    "string.base": "نام و نام خانوادگی باید متن باشد.",
+  }),
+
+  status: Joi.string()
+    .valid("pending", "approved", "rejected", "refunded")
+    .optional()
+    .allow("")
+    .messages({
+      "any.only":
+        "وضعیت باید یکی از pending، approved، rejected یا refunded باشد.",
+    }),
+});
 
 module.exports.verifyTicket_schema = verifyTicket_schema;
 module.exports.getTicketById_schema = getTicketById_schema;
@@ -93,4 +126,5 @@ module.exports.getUsers_schema = getUsers_schema;
 module.exports.getOtpLogs_schema = getOtpLogs_schema;
 module.exports.getSeats_schema  = getSeats_schema ; 
 module.exports.generateSeats_schema = generateSeats_schema;
+module.exports.getRefundRequests_schema = getRefundRequests_schema;
 

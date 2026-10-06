@@ -21,8 +21,8 @@ router.patch(
   "/tickets/:id/cancel",
   tokenVerify,
   requireAdmin,
-  checkbody_query("cancelTicket",validation.getTicketById_schema) ,
-  controller.cancelTicket_controller
+  checkbody_query("cancelTicket", validation.getTicketById_schema),
+  controller.cancelTicket_controller,
 );
 
 router.patch(
@@ -79,6 +79,14 @@ router.get(
   requireAdmin,
   checkbody_query("allSeats", validation.getSeats_schema),
   controller.getSeats_controller,
+);
+
+router.get(
+  "/refund-requests",
+  tokenVerify,
+  requireAdmin,
+  checkbody_query("allRefundRequests", validation.getRefundRequests_schema),
+  controller.getRefundRequests_controller,
 );
 
 module.exports = router;
