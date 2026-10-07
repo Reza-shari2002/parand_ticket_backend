@@ -1,6 +1,7 @@
 const AppError = require("../../config/AppErrore");
 const SendNotificationApi = require("./integration/SendNotificationApiKavenegar");
 const SendotpLookupApi = require("./integration/SendlookupKavehnegar");
+const SendOtpBaleApi = require("./integration/SendOtpBaleApi");
 const ticketsRepo = require("../tickets/tickets.reposetory");
 const settingRepo = require("../setting/setting.reposetory");
 const logger = require("../../config/logger");
@@ -197,6 +198,17 @@ async function sendOtpsendarray(phone_number, otpcode) {
 }
 
 
+async function sendOtpBale(phone_number, otpcode) {
+  try {
+    const result = await SendOtpBaleApi(phone_number, otpcode);
+    return result;
+  } catch (err) {
+    logger.error("خطا در سرویس ارسال OTP بله", { message: err.message });
+    throw new AppError("ارسال رمز یکبار مصرف از طریق بله ناموفق بود.", 500);
+  }
+}
+
+
 module.exports.sendOtplookup = sendOtplookup;
 module.exports.Submit_payment = Submit_payment;
-
+module.exports.sendOtpBale= sendOtpBale;
